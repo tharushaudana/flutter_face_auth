@@ -124,6 +124,8 @@ class _HomePageState extends State<HomePage> {
 
     log("Faces detected: ${faces.length}");
 
+    disableImageUpdate = false;
+
     if (faces.length != 1) return;
 
     facePredictor.setCurrentPrediction(currentImage!, faces[0]);
@@ -155,8 +157,6 @@ class _HomePageState extends State<HomePage> {
         final int? id = face.trackingId;
       }
     }*/
-
-    disableImageUpdate = false;
   }
 
   startStream() {
@@ -178,6 +178,7 @@ class _HomePageState extends State<HomePage> {
       enableAudio: false,
       imageFormatGroup: Platform.isAndroid
           ? ImageFormatGroup.nv21 // for Android
+          //? ImageFormatGroup.bgra8888 // for Android
           : ImageFormatGroup.bgra8888,
     );
 
@@ -218,6 +219,7 @@ class _HomePageState extends State<HomePage> {
       cameraController.stopImageStream();
       cameraController.dispose();
       faceDetector.close();
+      facePredictor.close();
     } catch (e) {}
 
     super.dispose();

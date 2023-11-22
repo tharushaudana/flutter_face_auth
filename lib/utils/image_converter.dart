@@ -21,7 +21,8 @@ imglib.Image _convertBGRA8888(CameraImage image) {
     image.width,
     image.height,
     image.planes[0].bytes,
-    format: imglib.Format.bgra,
+    format: imglib.Format.bgr,
+    //format: imglib.Format.bgra,
   );
 }
 
