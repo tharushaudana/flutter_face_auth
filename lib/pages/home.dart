@@ -170,6 +170,8 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     camera = widget.cameras[1];
 
+    super.initState();
+
     cameraController = CameraController(
       camera,
       ResolutionPreset.max,
@@ -208,8 +210,6 @@ class _HomePageState extends State<HomePage> {
     });
 
     initFaceDetector();
-
-    super.initState();
   }
 
   @override
