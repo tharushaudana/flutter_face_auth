@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'dart:ui' as ui;
 import 'package:image/image.dart' as imglib;
+import 'package:face_auth/utils/image_converter.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -72,6 +73,8 @@ class _HomePageState extends State<HomePage> {
           (sensorOrientation - rotationCompensation + 360) % 360;
     }
 
+    rotationCompensation = 0;
+
     rotation = InputImageRotationValue.fromRawValue(rotationCompensation);
 
     if (rotation == null) {
@@ -114,8 +117,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   processImage() async {
-    disableImageUpdate = true;
-
     if (currentImage == null) {
       log("Current Image is NULL !!!!!!!!!!!!");
       return;
@@ -128,8 +129,6 @@ class _HomePageState extends State<HomePage> {
     final List<Face> faces = await faceDetector.processImage(inputImage);
 
     log("Faces detected: ${faces.length}");
-
-    disableImageUpdate = false;
 
     if (faces.length != 1) return;
 
@@ -230,10 +229,10 @@ class _HomePageState extends State<HomePage> {
     });
 
     facePredictor.onFaceCaptured = (img) async {
-      /*currentFaceImage = await loadImageToUiImage(img);
+      currentFaceImage = await loadImageToUiImage(img);
       setState(() {
         
-      });*/
+      });
     };
 
     initFaceDetector();
@@ -274,7 +273,16 @@ class _HomePageState extends State<HomePage> {
                     ),
                   )
                 ],
-              ) : UIImage(image: currentFaceImage!)
+              ) : Column(
+                children: [
+                  UIImage(image: currentFaceImage!),
+                  FilledButton(onPressed: () {
+                    setState(() {
+                      currentFaceImage = null;
+                    });
+                  }, child: Text("Reset"),),
+                ],
+              )
       ),
     );
   }
@@ -290,7 +298,7 @@ class UIImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(painter: _UIImagePainter(image));
+    return CustomPaint(painter: _UIImagePainter(image), size: Size(image.width.toDouble(), image.height.toDouble()),);
   }
 }
 

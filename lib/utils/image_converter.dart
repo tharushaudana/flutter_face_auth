@@ -23,7 +23,7 @@ imglib.Image _convertBGRA8888(CameraImage image) {
     image.width,
     image.height,
     image.planes[0].bytes,
-    format: imglib.Format.rgb,
+    format: imglib.Format.rgba,
     //format: imglib.Format.bgra,
   );
 }
@@ -63,12 +63,14 @@ imglib.Image _convertNV21(CameraImage image) {
 
       // I don't know how these r, g, b values are defined, I'm just copying what you had bellow and
       // getting their 8-bit values.
-      outImg.setPixelRgba(i, j, ((r << 6) & 0xff0000) >> 16,
+      outImg.setPixelRgba(j, i, ((r << 6) & 0xff0000) >> 16,
           ((g >> 2) & 0xff00) >> 8, (b >> 10) & 0xff);
     }
   }
 
-  return outImg;
+  return imglib.copyRotate(outImg, -180);
+
+  //return outImg;
 }
 
 imglib.Image _convertYUV420(CameraImage image) {
