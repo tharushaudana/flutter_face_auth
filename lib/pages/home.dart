@@ -6,6 +6,7 @@ import 'package:camera/camera.dart';
 import 'package:face_auth/pages/face_image.dart';
 import 'package:face_auth/pages/user_modal.dart';
 import 'package:face_auth/utils/face_predictor.dart';
+import 'package:face_auth/utils/firebase_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
@@ -36,6 +37,12 @@ class _HomePageState extends State<HomePage> {
   List<UserModal> users = [];
 
   UserModal? matchedUser;
+
+  String nameInput = "";
+
+  bool isUsersDownloading = false;
+  bool isNewUserPushing = false;
+  bool isProcessing = false;
 
   initFaceDetector() {
     faceDetector = FaceDetector(
@@ -118,6 +125,10 @@ class _HomePageState extends State<HomePage> {
       return false;
     }
 
+    setState(() {
+      isProcessing = true;
+    });
+
     InputImage? inputImage = convertToInputImage(currentImage!);
 
     if (inputImage == null) return false;
@@ -126,19 +137,88 @@ class _HomePageState extends State<HomePage> {
 
     log("Faces detected: ${faces.length}");
 
-    if (faces.length != 1) return false;
+    bool b = false;
 
-    facePredictor.captureFace(currentImage!, faces[0]);
+    if (faces.length != 1) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return const AlertDialog(
+            title: Text("Try Again"),
+            content: Text(
+              "Your face not detected correctly.",
+            ),
+          );
+        },
+      );
+    } else {
+      facePredictor.captureFace(currentImage!, faces[0]);
+      startPredictions();
+      b = true;
+    }
 
-    startPredictions();
+    setState(() {
+      isProcessing = false;
+    });
 
-    return true;
+    return b;
   }
 
   startStream() {
     cameraController.startImageStream((CameraImage image) {
       currentImage = image;
     });
+  }
+
+  loadUsers() async {
+    setState(() {
+      isUsersDownloading = true;
+    });
+
+    await downloadUsers(users);
+
+    setState(() {
+      isUsersDownloading = false;
+    });
+  }
+
+  addNewUser() async {
+    setState(() {
+      isNewUserPushing = true;
+    });
+
+    UserModal user = UserModal();
+
+    user.setName(nameInput);
+    user.setFaceData(facePredictor.predictedData);
+
+    if (await pushNewUser(user)) {
+      users.add(user);
+      reset();
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return const AlertDialog(
+          title: Text("Save Failed!"),
+          content: Text(
+            "Your face unable to save in database. Please try again.",
+          ),
+        );
+      },
+    );
+
+    setState(() {
+      isNewUserPushing = false;
+    });
+  }
+
+  reset() {
+    isNewUserPushing = false;
+    facePredictor.reset();
+    setState(() {});
   }
 
   @override
@@ -165,6 +245,7 @@ class _HomePageState extends State<HomePage> {
       log("Camera ready..........ok");
 
       startStream();
+      loadUsers();
 
       setState(() {});
     }).catchError((Object e) {
@@ -202,6 +283,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Face Auth"),
@@ -210,6 +292,7 @@ class _HomePageState extends State<HomePage> {
           ? Container(
               color: Colors.black,
               height: double.infinity,
+              width: double.infinity,
               child: !cameraController.value.isInitialized ||
                       !facePredictor.initialized
                   ? const Text("Not initialized yet")
@@ -224,19 +307,61 @@ class _HomePageState extends State<HomePage> {
                           child: Container(
                             margin: const EdgeInsets.only(bottom: 20),
                             child: FilledButton(
-                              onPressed: () async {
-                                if (await processImage()) setState(() {});
-                              },
+                              onPressed: isProcessing || isUsersDownloading
+                                  ? null
+                                  : () async {
+                                      if (await processImage()) setState(() {});
+                                    },
                               child: const Text("PROCESS"),
                             ),
                           ),
                         ),
+                        Align(
+                          alignment: Alignment.topCenter,
+                          child: Container(
+                            color: Colors.white,
+                            padding: const EdgeInsets.all(10),
+                            child: Row(
+                              children: [
+                                !isUsersDownloading
+                                    ? Text("${users.length} faces loaded")
+                                    : const CircularProgressIndicator(),
+                                const Spacer(),
+                                OutlinedButton(
+                                  onPressed: isUsersDownloading ? null : () {
+                                    loadUsers();
+                                  },
+                                  child: const Text("RELOAD"),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (isProcessing)
+                          Container(
+                            width: double.infinity,
+                            height: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            color: Colors.white.withOpacity(0.5),
+                            child: const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "Processing...",
+                                    style: TextStyle(fontSize: 25),
+                                  ),
+                                  LinearProgressIndicator(),
+                                ],
+                              ),
+                            ),
+                          ),
                       ],
                     ))
           : Container(
               width: double.infinity,
               height: double.infinity,
-              padding: EdgeInsets.all(15),
+              padding: const EdgeInsets.all(15),
               child: Column(
                 children: [
                   FaceImage(image: facePredictor.currentFaceImage!),
@@ -248,7 +373,7 @@ class _HomePageState extends State<HomePage> {
                             matchedUser != null
                                 ? Column(
                                     children: [
-                                      Text("Hello,"),
+                                      const Text("Hello,"),
                                       Text(
                                         matchedUser!.name!,
                                         style: const TextStyle(fontSize: 30),
@@ -266,6 +391,18 @@ class _HomePageState extends State<HomePage> {
                                         "you can save your face now.",
                                         textAlign: TextAlign.center,
                                       ),
+                                      const SizedBox(height: 20),
+                                      TextField(
+                                        onChanged: (value) {
+                                          setState(() {
+                                            nameInput = value.trim();
+                                          });
+                                        },
+                                        decoration: const InputDecoration(
+                                            hintText:
+                                                "Enter your name here..."),
+                                      ),
+                                      const SizedBox(height: 20),
                                     ],
                                   ),
                             Row(
@@ -273,9 +410,7 @@ class _HomePageState extends State<HomePage> {
                               children: [
                                 OutlinedButton(
                                   onPressed: () {
-                                    setState(() {
-                                      facePredictor.reset();
-                                    });
+                                    reset();
                                   },
                                   child: Text("BACK"),
                                 ),
@@ -283,8 +418,15 @@ class _HomePageState extends State<HomePage> {
                                 if (matchedUser == null)
                                   Expanded(
                                     child: FilledButton(
-                                      onPressed: () {},
-                                      child: Text("SAVE"),
+                                      onPressed:
+                                          nameInput.isEmpty || isNewUserPushing
+                                              ? null
+                                              : () {
+                                                  addNewUser();
+                                                },
+                                      child: isNewUserPushing
+                                          ? const CircularProgressIndicator()
+                                          : const Text("SAVE"),
                                     ),
                                   ),
                               ],
