@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "255533361884",
+    "project_id": "face-auth-flutter-80dac",
+    "storage_bucket": "face-auth-flutter-80dac.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:255533361884:android:76c7f5e9b8bc8be1fde219",
+        "android_client_info": {
+          "package_name": "com.example.face_auth"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZlUTZyoSyZq4m5Fs-qOycznIzQTtuP6c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

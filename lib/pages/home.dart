@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 
@@ -6,6 +7,8 @@ import 'package:face_auth/utils/face_predictor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
+import 'dart:ui' as ui;
+import 'package:image/image.dart' as imglib;
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -27,6 +30,8 @@ class _HomePageState extends State<HomePage> {
   final facePredictor = FacePredictor();
 
   CameraImage? currentImage;
+
+  ui.Image? currentFaceImage;
 
   bool disableImageUpdate = false;
 
@@ -81,7 +86,7 @@ class _HomePageState extends State<HomePage> {
     // * nv21 for Android
     // * bgra8888 for iOS
 
-    if (format == null ||
+    /*if (format == null ||
         (Platform.isAndroid && format != InputImageFormat.nv21) ||
         (Platform.isIOS && format != InputImageFormat.bgra8888)) {
       log("Invalid image format !!!!!!!!!!!");
@@ -92,7 +97,7 @@ class _HomePageState extends State<HomePage> {
     if (image.planes.length != 1) {
       log("So many planes !!!!!!!!!!!");
       return null;
-    }
+    }*/
 
     final plane = image.planes.first;
 
@@ -102,7 +107,7 @@ class _HomePageState extends State<HomePage> {
       metadata: InputImageMetadata(
         size: Size(image.width.toDouble(), image.height.toDouble()),
         rotation: rotation, // used only in Android
-        format: format, // used only in iOS
+        format: format!, // used only in iOS
         bytesPerRow: plane.bytesPerRow, // used only in iOS
       ),
     );
@@ -166,6 +171,20 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  Future<ui.Image> loadImageToUiImage(imglib.Image image) async {
+    Completer<ui.Image> completer = Completer();
+    ui.decodeImageFromPixels(
+      image.getBytes(),
+      image.width,
+      image.height,
+      ui.PixelFormat.rgba8888,
+      (ui.Image img) {
+        completer.complete(img);
+      },
+    );
+    return completer.future;
+  }
+
   @override
   void initState() {
     camera = widget.cameras[1];
@@ -210,6 +229,13 @@ class _HomePageState extends State<HomePage> {
       setState(() {});
     });
 
+    facePredictor.onFaceCaptured = (img) async {
+      /*currentFaceImage = await loadImageToUiImage(img);
+      setState(() {
+        
+      });*/
+    };
+
     initFaceDetector();
   }
 
@@ -235,7 +261,7 @@ class _HomePageState extends State<HomePage> {
       body: Center(
         child: !cameraController.value.isInitialized || !facePredictor.initialized
             ? Text("Not initialized yet")
-            : Stack(
+            : currentFaceImage == null ?  Stack(
                 children: [
                   CameraPreview(cameraController),
                   Align(
@@ -248,8 +274,43 @@ class _HomePageState extends State<HomePage> {
                     ),
                   )
                 ],
-              ),
+              ) : UIImage(image: currentFaceImage!)
       ),
     );
+  }
+}
+
+class UIImage extends StatelessWidget {
+  final ui.Image image;
+
+  const UIImage({
+    super.key,
+    required this.image,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(painter: _UIImagePainter(image));
+  }
+}
+
+class _UIImagePainter extends CustomPainter {
+  final ui.Image image;
+
+  _UIImagePainter(this.image);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawImageRect(
+      image,
+      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint(),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_UIImagePainter oldDelegate) {
+    return image != oldDelegate.image;
   }
 }
