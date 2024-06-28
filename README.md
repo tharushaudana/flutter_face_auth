@@ -1,6 +1,6 @@
 # Face Authentication Application
 
-This is a face authentication application connected to Firebase Firestore for storing face data. It uses the `facenet512` model to handle face recognition.
+This Flutter project implements face authentication using the FaceNet512 model, storing face data (as Float32 arrays) and names in Firebase Firestore.
 
 ## Features
 
@@ -10,18 +10,14 @@ This is a face authentication application connected to Firebase Firestore for st
 - **Face Data Storage**: Allows users to capture their face and store the data in Firestore.
 - **Face Prediction**: Predicts the user's identity by comparing the captured face data with the stored data using cosine similarity.
 
-## How It Works
+## Dependencies
 
-1. **App Launch**: 
-   - On launching the app, it loads all face data from Firebase Firestore.
-   
-2. **Storing Face Data**:
-   - Capture your face through the app.
-   - Your face data (a Float32 array of length 512) and your name (a string) are stored in Firestore.
-
-3. **Predicting Identity**:
-   - On subsequent uses, the app captures your face and predicts your identity.
-   - The prediction is based on cosine similarity between the captured face data and the stored data in Firestore.
+- camera: ^0.10.5+5
+- google_mlkit_face_detection: ^0.9.0
+- image: ^3.0.2
+- tflite_flutter: ^0.10.3
+- cloud_firestore: ^4.13.2
+- firebase_core: ^2.23.0
 
 ## Screenshots
 
