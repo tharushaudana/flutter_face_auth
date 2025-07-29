@@ -12,7 +12,9 @@ Future<void> main() async {
 
   _cameras = await availableCameras();
 
-  runApp(MyApp(cameras: _cameras,));
+  runApp(MyApp(
+    cameras: _cameras,
+  ));
 }
 
 class MyApp extends StatelessWidget {
@@ -28,7 +30,9 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: HomePage(cameras: cameras,),
+      home: HomePage(
+        cameras: cameras,
+      ),
     );
   }
 }
