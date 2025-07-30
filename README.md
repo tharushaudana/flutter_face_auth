@@ -1,3 +1,16 @@
+# [ARCHIVED] Face Authentication Application
+
+⚠️ **This project is archived and no longer maintained.**  
+A newer, compatible version is available at:  
+👉 [flutter_face_auth_2](https://github.com/tharushaudana/flutter_face_auth_2)  
+Compatible with:  
+- **Flutter** 3.32.6 • channel stable • [flutter.git](https://github.com/flutter/flutter.git)  
+- **Framework** revision 077b4a4ce1 (2025-07-08)  
+- **Engine** revision 72f2b18bb0  
+- **Dart** 3.8.1 • DevTools 2.45.1
+
+---
+
 # Face Authentication Application
 
 This Flutter project implements face authentication using the FaceNet512 model, storing face data (as Float32 arrays) and names in Firebase Firestore.
